@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Tools</title>
+		<meta charset="UTF-8">
+		<meta name="description" content="SplitterMerger">
+		<meta name="author" content="pheuschk">
+	</head>
+
+	<body>
+		<form>
+			Wanna split or merge?<br /> 
+			<input id="split" name="choice" type="radio" value="split" onclick="toggle(0);clearall()" checked /> 
+			<label for="split">Split</label><br>
+			<input id="merge" name="choice" type="radio" value="merge" onclick="toggle(1);clearall()"/>
+			<label for="merge">Merge</label><br>
+		</form>
+		<div id="splitterDiv">
+			<h2>Splitting</h2>
+			<form>
+				Enter a valid Kurviger.de URL<br>
+				<input id="url_split" type="text" onkeyup="split()">
+				<p>
+				Enter the numbers of the markers at which to split<br>
+				<input id="splits" type="text" onkeyup="split()">
+			</form>
+		</div>
+		<div id="mergerDiv" style="display:none">
+			<h2>Merging</h2>
+			<form onsubmit="merge(); return false;">
+				Add each URL to be merged one after the other<br>
+				<input id="url_merge" type="text"><br>
+			</form>
+			<div id="buttons" style="padding-top:5px">
+				<button type="button" onclick="merge()" style="font-weight:bold">Add URL</button>&nbsp;
+				<button type="button" onclick="clearall()">Clear All</button>
+			</div>
+			<p>
+		</div>
+		<textarea id="result" rows="20" cols="80"></textarea>
+			
+		<script>// <![CDATA[
+			function toggle(target) {
+				var split = document.getElementById("splitterDiv");
+				var merge = document.getElementById("mergerDiv");
+				if (target === 0) {	
+					if (split.style.display != 'block') {
+						split.style.display = 'block';
+						merge.style.display = 'none'
+					}
+				} else if (target === 1) {
+					if (merge.style.display != 'block') {
+						merge.style.display = 'block';
+						split.style.display = 'none'
+					}
+				}
+			}
+			
+			// Algo should be able to do any URL, so long as there's a list of %elementName%s in the middle
+			var elementName = "point";
+			
+			function split() {
+				var total = document.getElementById("url_split").value;
+				var list = document.getElementById("splits").value;
+				var resultBox = document.getElementById("result");
+				
+				var splits = list.split(/[\s,]+/);
+				var startIndex = findStart(total, '?');
+				var endIndex = findEnd(total, elementName);
+
+				var start = total.substring(0, startIndex);
+				var middle = total.substring(startIndex, endIndex);
+				var end = total.substring(endIndex);
+
+				var elements = middle.split("&");
+
+				// Remove all faulty splits entered by user so that none of the upcoming loops crash
+				for (i = 0; i < splits.length; i++) {
+					var split = splits[i];
+					if (split < 1 || split >= elements.length - 1 || !isInt(split)) {
+						console.log("Removed invalid split " + split);
+						splits.splice(i, 1);
+					}
+				}
+
+				var results = [];
+				if (splits.length === 0 || elements.length === 0) {
+					console.log("No valid splits found");
+					resultBox.innerHTML = total;
+				} else {
+					// Add first and last element separately because they have to respect the element list size, loop over rest
+					results.push(start + getItems(elements, 0, splits[0]) + end);
+					for (i = 0; i < splits.length - 1; i++) {
+						results.push(start + getItems(elements, splits[i], splits[i + 1]) + end);
+					}
+					results.push(start + getItems(elements, splits[splits.length - 1], elements.length - 1) + end);
+					
+					var prettyString = "";
+					for (i = 0; i < results.length; i++) {
+						prettyString += results[i] + "\n\n";
+					}
+					resultBox.innerHTML = prettyString;
+				}
+			}
+			
+			function merge() {
+				var existing = document.getElementById("result").value;
+				var additional = document.getElementById("url_merge").value
+				
+				document.getElementById("url_merge").value = "";
+				
+				if (!existing) {
+					document.getElementById("result").innerHTML = additional;
+					return;
+				}
+				var parts = [existing, additional];
+
+				// Find the full intro, protocol, domain, TLD, '?', and the first element (until first '&')
+				var first = parts[0];
+				var result = first.substring(0, findStart(first, '&'));
+
+				// For each part that is to be merged, get content from first '&' (which will always skip the first item!)
+				// to last item. The last item is also the start for the next part
+				for (i = 0; i < parts.length; i++) {
+					var string = parts[i];
+					var endIndex = findEnd(string, elementName);
+					result += string.substring(string.indexOf('&') + 1, endIndex);
+				}
+
+				// Append the fluff at the end without another element. Fluff from first part is used, rest is discarded
+				result += first.substring(findEnd(first, elementName));
+				document.getElementById("result").innerHTML = result;
+			}
+			
+			function clearall() {
+				document.getElementById("result").innerHTML = "";
+			}
+			
+			function findStart(total, limiter) {
+				return total.indexOf(limiter) + 1;
+			}
+			
+			function findEnd(total, limiter) {
+				var regex = new RegExp("&[^(" + limiter + ")]");
+				var result = total.match(regex);
+
+				if (result && result.length > 0) {
+					return total.indexOf(result[0]) + 1;
+				}
+				return -1;
+			}
+			
+			function toggleResult(show) {
+				if (show) {
+					document.getElementById("result").style.display = 'block';
+				} else {
+					document.getElementById("result").style.display = 'none';
+				}
+			}
+			
+			function getItems(items, start, end) {
+				var result = "";
+				for (pos = start; pos <= end; pos++) {
+					result += items[pos] + "&";
+				}
+				return result;
+			}
+			
+			function isInt(value) {
+			  if (isNaN(value)) {
+				return false;
+			  }
+			  var x = parseFloat(value);
+			  return (x | 0) === x;
+			}
+		// ]]></script>
+	</body>
+
+</html>
