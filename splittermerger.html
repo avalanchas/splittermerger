@@ -8,8 +8,12 @@
 	</head>
 
 	<body>
+		<div>
+			This tool allows you to split or merge <a href="https://kurviger.de/en">Kurviger</a> or <a href="https://graphhopper.com/maps/">GraphHopper</a> urls.
+			Simply paste the url in the field below and provide the waypoint number where you want to split.
+		</div>
 		<form>
-			Wanna split or merge?<br /> 
+			Split or merge?<br />
 			<input id="split" name="choice" type="radio" value="split" onclick="toggle(0);clearall()" checked /> 
 			<label for="split">Split</label><br>
 			<input id="merge" name="choice" type="radio" value="merge" onclick="toggle(1);clearall()"/>
@@ -18,10 +22,12 @@
 		<div id="splitterDiv">
 			<h2>Splitting</h2>
 			<form>
-				Enter a valid URL<br>
+				Enter a valid Kurviger or GraphHopper URL<br>
 				<input id="url_split" type="text" onkeyup="split()">
 				<p>
-				Enter the numbers of the markers at which to split<br>
+				Enter the numbers of the markers at which to split. For example a route with 10 waypoints, you might
+					want to see the first 3 waypoints in the first route and up to waypoint 7 in the second and the rest
+					in the last you would write <code>3,7</code><br>
 				<input id="splits" type="text" onkeyup="split()">
 			</form>
 		</div>
